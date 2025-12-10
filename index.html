@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hans's Little Helper</title>
+<style>
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Rounded", "Helvetica Neue", sans-serif;
+    background: #0d0d0d;
+    margin: 0;
+    padding: 0;
+    color: #f8f8f8;
+}
+.container {
+    max-width: 440px;
+    margin: 0 auto;
+    padding: 20px;
+    position: relative;
+}
+h1 {
+    text-align: center;
+    font-weight: 800;
+    font-size: 32px;
+    margin-bottom: 20px;
+    color: #f28b82;
+    text-shadow: 1px 1px 5px rgba(0,0,0,0.5);
+}
+/* Input + Reset button container */
+.input-group {
+    display: flex;
+    align-items: center;
+    margin-bottom: 14px;
+}
+input[type="text"] {
+    flex: 1;
+    padding: 14px;
+    font-size: 16px;
+    border-radius: 12px;
+    border: none;
+    outline: none;
+    background: #2a2a2a;
+    color: #fff;
+}
+#resetBtn {
+    width: 45px;
+    height: 45px;
+    margin-left: 10px;
+    border-radius: 12px;
+    border: none;
+    background: #FFDCA8;
+    cursor: pointer;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+/* Button group */
+.btn-group {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+.btn {
+    flex: 1;
+    padding: 14px 0;
+    border-radius: 14px;
+    font-size: 16px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.1s, opacity 0.2s, box-shadow 0.2s;
+    color: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+.btn:active { transform: scale(0.96); }
+.btn-inflow { background: #7DE8A9; box-shadow: 0 4px 10px rgba(0,0,0,0.5);}
+.btn-outflow { background: #F7A6A6; box-shadow: 0 4px 10px rgba(0,0,0,0.5);}
+.btn-history { background: #fbc4c4; box-shadow: 0 4px 10px rgba(0,0,0,0.5);}
+/* Cards */
+.card {
+    background: #1a1a1a;
+    border-radius: 20px;
+    padding: 22px;
+    margin-bottom: 20px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.5);
+    border: 2px solid #f28b82;
+}
+/* Labels */
+label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 16px; color: #ffb3b3; }
+/* Receipt - main computation */
+#receipt {
+    max-height: 250px;
+    overflow-y: auto;
+    margin-top: 10px;
+    padding-right: 6px;
+}
+#receipt::-webkit-scrollbar {
+    width: 6px;
+}
+#receipt::-webkit-scrollbar-thumb {
+    background: rgba(242,139,130,0.5);
+    border-radius: 3px;
+}
+.entry {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 18px;
+    margin-bottom: 10px;
+    border-radius: 16px;
+    background: #2a2a2a;
+    font-size: 16px;
+    font-weight: 500;
+    border-left: 6px solid transparent;
+    transition: transform 0.2s, background 0.2s, border-left-color 0.2s;
+}
+.entry:hover { transform: translateX(2px); background: #383838;}
+.entry .amount.inflow { color: #7DE8A9; font-weight: 600; border-left-color: #7DE8A9; }
+.entry .amount.outflow { color: #F7A6A6; font-weight: 600; border-left-color: #F7A6A6; }
+.delete-btn { background: transparent; border: none; font-size: 18px; color: #ff3b30; cursor: pointer;}
+/* Summary */
+.summary {
+    background: #1a1a1a;
+    border-radius: 20px;
+    padding: 22px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.5);
+    border: 2px solid #f28b82;
+    margin-top: 20px;
+}
+.summary div { font-weight: 600; font-size: 18px; margin-bottom: 10px;}
+#netValue.green, #diffValue.green { color: #7DE8A9; }
+#netValue.red, #diffValue.red { color: #F7A6A6; }
+/* Keypad */
+.keypad {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+.keypad .row { display: flex; gap: 6px; }
+.keypad button {
+    flex: 1;
+    padding: 16px;
+    font-size: 20px;
+    border-radius: 12px;
+    border: none;
+    background: #2a2a2a;
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+}
+.keypad button:active { transform: scale(0.95); background:#383838; }
+/* History modal */
+#historyModal {
+    display: none;
+    position: fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background: rgba(0,0,0,0.95);
+    z-index: 1000;
+    overflow-y:auto;
+    padding: 40px 20px;
+    box-sizing: border-box;
+}
+#historyModal .history-content {
+    max-width: 440px;
+    margin: 0 auto;
+    background:#1a1a1a;
+    padding:20px;
+    border-radius:20px;
+    border:2px solid #f28b82;
+}
+#historyModal h2 {
+    text-align:center;
+    color:#f28b82;
+    margin-bottom:20px;
+    font-size: 24px;
+}
+#historyModal #exitHistory {
+    margin-top: 20px;
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 14px;
+    background: #f28b82;
+    color: #000;
+    font-weight: 700;
+    cursor: pointer;
+}
+/* Scrollable history list */
+#historyList {
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 6px;
+}
+#historyList::-webkit-scrollbar {
+    width: 6px;
+}
+#historyList::-webkit-scrollbar-thumb {
+    background: rgba(242,139,130,0.5);
+    border-radius: 3px;
+}
+#historyList .entry {
+    font-size: 18px;
+    color: #fff;
+    font-weight: 500;
+    padding: 12px 16px;
+    border-radius: 12px;
+    margin-bottom: 8px;
+    background: #2a2a2a;
+    border-left: 6px solid transparent;
+}
+#historyList .entry .amount.inflow { color: #7DE8A9; border-left-color: #7DE8A9; }
+#historyList .entry .amount.outflow { color: #F7A6A6; border-left-color: #F7A6A6; }
+#historyList button {
+    font-size: 16px;
+}
+</style>
+</head>
+<body>
+
+<div class="container" id="mainApp">
+    <h1>Hans's Little Helper</h1>
+
+    <!-- Amount + Reset -->
+    <div class="card">
+        <label>Amount (₱)</label>
+        <div class="input-group">
+            <input type="text" id="amount" placeholder="Enter amount">
+            <button id="resetBtn" title="Reset current computation">↺</button>
+        </div>
+
+        <!-- Calculator Pad -->
+        <div class="keypad">
+            <div class="row"><button onclick="pressKey('1')">1</button><button onclick="pressKey('2')">2</button><button onclick="pressKey('3')">3</button></div>
+            <div class="row"><button onclick="pressKey('4')">4</button><button onclick="pressKey('5')">5</button><button onclick="pressKey('6')">6</button></div>
+            <div class="row"><button onclick="pressKey('7')">7</button><button onclick="pressKey('8')">8</button><button onclick="pressKey('9')">9</button></div>
+            <div class="row"><button onclick="pressKey('.')">.</button><button onclick="pressKey('0')">0</button><button onclick="pressKey('del')">⌫</button></div>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn btn-inflow" onclick="addEntry('inflow')">Inflow</button>
+            <button class="btn btn-outflow" onclick="addEntry('outflow')">Outflow</button>
+            <button class="btn btn-history" onclick="openHistory()">History</button>
+        </div>
+    </div>
+
+    <!-- Receipt Card -->
+    <div class="card">
+        <label>Receipt</label>
+        <div id="receipt"></div>
+    </div>
+
+    <!-- Summary Card -->
+    <div class="card summary">
+        <div>Total Inflow: ₱<span id="totalInflow">0</span></div>
+        <div>Total Outflow: ₱<span id="totalOutflow">0</span></div>
+        <div>Net Total: ₱<span id="netValue">0</span></div>
+        <label>Record Total (₱)</label>
+        <input type="text" id="recordTotal" placeholder="0">
+        <div>Difference: ₱<span id="diffValue">0</span></div>
+    </div>
+</div>
+
+<!-- History Modal -->
+<div id="historyModal">
+    <div class="history-content">
+        <h2>Computation History</h2>
+        <div id="historyList"></div>
+        <button id="exitHistory" onclick="exitHistory()">Exit History</button>
+    </div>
+</div>
+
+<script>
+let entries=[];
+let history=[];
+
+// Calculator pad input
+function pressKey(key){
+    const input = document.getElementById("amount");
+    if(key === 'del'){
+        input.value = input.value.slice(0,-1);
+    } else if(key === '.'){
+        if(!input.value.includes('.')){
+            input.value = input.value === "" ? "0." : input.value + ".";
+        }
+    } else {
+        input.value += key;
+    }
+}
+
+// Add inflow/outflow
+function addEntry(type){
+    let amount=parseFloat(document.getElementById("amount").value);
+    if(isNaN(amount)||amount<=0) return;
+    entries.push({amount,type});
+    document.getElementById("amount").value="";
+    updateReceipt();
+    updateSummary();
+}
+
+// Reset computation
+document.getElementById("resetBtn").onclick=function(){
+    if(entries.length===0) return;
+    history.push([...entries]);
+    entries=[];
+    updateReceipt();
+    updateSummary();
+    alert("Computation saved to history and reset!");
+}
+
+// Update receipt
+function updateReceipt(readOnly=false){
+    const receipt=document.getElementById("receipt");
+    receipt.innerHTML="";
+    entries.forEach((entry,i)=>{
+        const div=document.createElement("div");
+        div.className="entry";
+        div.innerHTML=`<span class="amount ${entry.type}">${entry.type==='inflow'?'+':'-'}${entry.amount.toLocaleString()}</span>${!readOnly?`<button class="delete-btn" onclick="deleteEntry(${i})">&times;</button>`:''}`;
+        receipt.appendChild(div);
+    });
+}
+
+// Delete entry
+function deleteEntry(index){ entries.splice(index,1); updateReceipt(); updateSummary(); }
+
+// Update summary
+function updateSummary(){
+    const inflow=entries.filter(e=>e.type==='inflow').reduce((a,b)=>a+b.amount,0);
+    const outflow=entries.filter(e=>e.type==='outflow').reduce((a,b)=>a+b.amount,0);
+    const net=inflow-outflow;
+
+    document.getElementById("totalInflow").textContent=inflow.toLocaleString();
+    document.getElementById("totalOutflow").textContent=outflow.toLocaleString();
+
+    const netValue=document.getElementById("netValue");
+    netValue.textContent=net.toLocaleString();
+    netValue.className=net>=0?'green':'red';
+
+    const record=parseFloat(document.getElementById("recordTotal").value)||0;
+    const diff=record-net;  // difference = record total - net total
+    const diffValue=document.getElementById("diffValue");
+    diffValue.textContent=diff.toLocaleString();
+    diffValue.className=diff===0?'green':'red';
+}
+
+document.getElementById("recordTotal").addEventListener("input",updateSummary);
+
+// History modal
+function openHistory(){
+    if(entries.length>0) history.push([...entries]);
+    entries=[];
+    updateReceipt();
+    updateSummary();
+    const modal=document.getElementById("historyModal");
+    const list=document.getElementById("historyList");
+    list.innerHTML="";
+    if(history.length===0) list.innerHTML="<p style='color:#fff;text-align:center;'>No history yet.</p>";
+    else{
+        history.forEach((session,i)=>{
+            const btn=document.createElement("button");
+            btn.style.width="100%";
+            btn.style.padding="10px";
+            btn.style.margin="6px 0";
+            btn.style.borderRadius="12px";
+            btn.style.border="none";
+            btn.style.background="#fbc4c4";
+            btn.style.cursor="pointer";
+            btn.style.fontWeight="600";
+            btn.textContent=`Computation ${i+1}`;
+            btn.onclick=()=>{ showHistoryReceipt(session); };
+            list.appendChild(btn);
+        });
+    }
+    document.getElementById("mainApp").style.display="none";
+    modal.style.display="block";
+}
+
+function showHistoryReceipt(session){
+    const list=document.getElementById("historyList");
+    list.innerHTML="";
+    session.forEach(entry=>{
+        const div=document.createElement("div");
+        div.className="entry";
+        div.innerHTML=`<span class="amount ${entry.type}">${entry.type==='inflow'?'+':'-'}${entry.amount.toLocaleString()}</span>`;
+        list.appendChild(div);
+    });
+    const summary=document.createElement("div");
+    summary.className="card summary";
+    const inflow=session.filter(e=>e.type==='inflow').reduce((a,b)=>a+b.amount,0);
+    const outflow=session.filter(e=>e.type==='outflow').reduce((a,b)=>a+b.amount,0);
+    const net=inflow-outflow;
+    summary.innerHTML=`<div>Total Inflow: ₱${inflow.toLocaleString()}</div><div>Total Outflow: ₱${outflow.toLocaleString()}</div><div>Net Total: ₱${net.toLocaleString()}</div>`;
+    list.appendChild(summary);
+}
+
+function exitHistory(){
+    document.getElementById("historyModal").style.display="none";
+    document.getElementById("mainApp").style.display="block";
+    entries=[];
+    updateReceipt();
+    updateSummary();
+}
+</script>
+</body>
+</html>
